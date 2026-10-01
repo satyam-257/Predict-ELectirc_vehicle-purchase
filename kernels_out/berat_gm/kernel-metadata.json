@@ -1,0 +1,31 @@
+{
+  "id": "beraterolelk/lb-0-94650-ev-purchase-gm-ensemble",
+  "id_no": 133958270,
+  "title": "\u26a1 [LB 0.94650] EV Purchase GM Ensemble",
+  "code_file": "lb-0-94650-ev-purchase-gm-ensemble.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": false,
+  "enable_gpu": false,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "keywords": [
+    "beginner",
+    "lightgbm",
+    "exploratory data analysis",
+    "classification",
+    "xgboost"
+  ],
+  "dataset_sources": [
+    "beraterolelk/kaggle-grandmaster-tabular-hyperparameters-zoo",
+    "beraterolelk/kaggle-grandmaster-winning-solutions-2015-2026",
+    "beraterolelk/kaggle-tabular-winning-feature-engineering-recipes"
+  ],
+  "kernel_sources": [],
+  "competition_sources": [
+    "playground-series-s6e9"
+  ],
+  "model_sources": [],
+  "docker_image": "gcr.io/kaggle-images/python@sha256:dafd4ce5668bbf1ad422e4c109e0f18c9623c3a7c7f48b0235f13142755c40b9",
+  "machine_shape": "None"
+}

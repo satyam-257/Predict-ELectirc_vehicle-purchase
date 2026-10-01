@@ -1,0 +1,25 @@
+{
+  "id": "heuljax/kps6e09-generator-aware-ridge-logistic-regression",
+  "id_no": 136392200,
+  "title": "KPS6E09 Generator-Aware Ridge Logistic Regression",
+  "code_file": "kps6e09-generator-aware-ridge-logistic-regression.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": false,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "keywords": [
+    "gpu"
+  ],
+  "dataset_sources": [
+    "itzzomkar/ev-adoption-behavior-and-range-anxiety"
+  ],
+  "kernel_sources": [],
+  "competition_sources": [
+    "playground-series-s6e9"
+  ],
+  "model_sources": [],
+  "docker_image": "gcr.io/kaggle-private-byod/python@sha256:37c64f7dd9c54116ecd1bcc88817c5469b88387388fade02bfa8bf3fc647d461",
+  "machine_shape": "NvidiaTeslaT4"
+}

@@ -1,0 +1,255 @@
+{
+  "id": 116071,
+  "topicId": 744797,
+  "title": "Rank12 Approach",
+  "subtitle": "Standing on the shoulder of giants",
+  "message": {
+    "id": 3530896,
+    "postDate": "2026-10-01T01:03:31.823Z",
+    "rawMarkdown": "Hello all, <br>\n\nI am elated to present my solution writeup for the Playground Season 6 Episode 9 competition. This was a binary classifier to predict the probability of purchasing an electric car given relevant tabular features. This was a fairly large training set with 600k+ rows and a large test set with ~250k rows, eliciting a decent CV-LB relation.\n\nI wish to extend sincere thanks to Kaggle for this interesting challenge and my fellow participants for their generous sharing through the month. Special thanks to Don Mani for the team-up.\n\nOur solution is a by-product of a number of public ideas and private inputs as well. Let's delve into the details as below- \n\n## Assignment details \n\n- Goal - to predict the probability to purchase an electric car\n- Model type -binary-tabular classifier \n- Eval-metric - ROC-AUC score\n- Competitors = 3576\n- Public LB rank = 25\n- Private LB rank = 12\n\n## Overall architecture\n\nAs illustrated in the figure above, my overall solution architecture relied on 4 major pillars -\n- Diverse features from ideas discussed in past playground solutions, my past pipelines and public notebooks, public notebook ideas yielded the best impact\n- Models with wide and diverse parameters to elicit variety in the results \n- A robust ensemble using CV scores as base, with 2 stage model methods to elicit as much signal boost as feasible post the single model framework\n\n## Feature Engineering \n\n- This was the cynosure of the competition pipeline\n- Most of the past playground feature ideas, recent winning ideas and public kernel features worked well for us this time \n- We built a large feature store comprising of 300+ features using a concoction of several public ideas, past solution and Claude/ Codex suggestions for this assignment \n- Large feature sets and complex interactions reduced the CV score and did not work for us at all, simple and small feature sets worked well instead\n- Several features were sensitive to model algorithms chosen - certain features performed well with a gbdt, while tanked with a NN model and vice-versa\n\nMy key feature ideas included -\n\n- category twins of numeric columns \n- arithmetic operations involving 1-2-3 numeric columns at a time \n- n-gram target encoder interactions with category features \n- feature encoders - group-by features, with 1 feature as a grouper and another high cardinal feature as an aggregator\n- global count encoder across all category columns\n- rounded columns as per public ideas and kernels \n- binning columns \n- secondary models for null values across columns\n- direct inclusion of public kernel features across all single models and oof-ensemble kernels shared (ignoring the blind blends)\n\nMy single models often used between 30-250 features this time.  \n\n## Single models \n\nThis surprised us a lot - usually we end up training a lot of single models with diverse features, parameters and preprocessing caveats, but this episode was totally different - a large number of single models with complex interactions and features and complex model ideas completely failed, while small and simple models with 30-80 features succeeded with the best in-class CV scores. After a while, gbdt models outperformed Pytabkit models! Also, LightGBM often outscored the rest of the models significantly. <br>\n\nAll of these models were trained with the below CV scheme - \n`StratifiedKFold(15, random_state = 42, shuffle = True)`\n\n\n<br>Our component model stack contained the below- \n1. LightGBM - best performing single models, public kernel ideas often gleaned the best available features and model parameters. We altered the parameters, a few features and the cv-scheme and produced slight alphas over the shared public work\n2. XgBoost, Catboost - good single model candidates, for XgBoost, depth = 4-6 worked the best. Catboost performed well, but was inferior in CV scores over XgBoost almost always\n3. RealMLP, TABM - decent single model candidates, REALMLP training parameters played a significant role in the cv-score. Often, training for lesser epochs (epochs <= 3) worked well. TABM results closely matched the REALMLP ones, with TABM-Normal being the best candidate among the options available. Custom backbones and architecture changes did not help at all.\n4. Transformer type models - they also performed moderately well on this dataset, inferior to REALMLP/ TABM, but added some diversity to the ensemble \n5. TAB-RESNET, AUTOINT - they also added a bit of diversity, but failed to provide a standalone result to good effect \n6. Factorization machines - akin to TAB-RESNET, I added them for ensemble diversity only \n7. GNN - this was an extremely complex model for this use-case and failed to provide any meaningful and competitive CV-score to include in the ensemble \n\nUsing a slightly higher fold-count helped with the CV-score slightly, adding > 15 folds to the offline model destroyed value. 15-fold scheme was the peak here for our feature sets. \n\n## Model blending \n\nChoosing a robust blend strategy was crucial to maximize my gains here. My model blending strategy was divided into 3 sections - \n\n|Model option| Comments|\n|--------------| -----------|\n| Autogluon | - This was a good option with a great CV score but leaderboard score was low and not chosen for the final submission |\n| Ridge | - This was fast to train and provided a good CV-LB correlation |\n| Logistic Regression| - This was fast to train and provided CV-LB stability, but CV score was lower than the rest |\n\nWe used the public post-processing kernel function in our submissions as below- \n\n```\ndef apply_pp_rules(df, p):\n    \"Defines boundary rules for post-processing\"\n    \n    inc, km = df.Annual_Income_USD.to_numpy(), df.Daily_Commute_km.to_numpy()\n    nosub   = (df.Subsidy_Available == \"No\").to_numpy()\n    env1    = (df.Environmental_Concern_Level == 1).to_numpy()\n    anx     = df.Range_Anxiety_Level.isin([\"Medium\", \"High\"]).to_numpy()\n    r       = rk(p)\n    \n    r[inc >= 170537] += 2                                    # always buys in training (393/393)\n    r[(inc >= 31004) & (inc <= 41970)] -= 2                  # never buys (0/1257)\n    r[km >= 83] -= 2                                         # never buys (0/186)\n    r[(inc == 30000) & nosub & (env1 | anx)] -= 2            # never buys (0/7157)\n    \n    return rankdata(r, method=\"ordinal\") / len(r)\n\ndef rk(v):\n    return rankdata(v) / len(v)\n```\n\n\n<br>After a lot of deliberation, we decided to choose- \n1. Ridge ensemble with post-processing for 1 candidate (Ravi)\n2. LR-margin anchored LightGBM views with prediction adjustment using ancillary models (Don) - detailed in the next section\n\nA lot of large ensembles with 150-200+ single models tanked on the CV score, using a set of 100-120 diverse models here was good enough.\n\nWe ended up selecting the better result from either approach to diversify our result and reduce the shakeup risk. Both candidates used the public post-processing rank rules; Don's LR-margin initialization was what separated his pipeline from the Ridge stack.\n\n## Don Mani's pipeline (Candidate 2)\n\n**Base model:** A generator-aware logistic regression with engineered category and rate features, including features from how income values split into GPT-2 tokens. Its logits served as the starting point (init margin) for three LightGBM models.\n\n**Three feature views:** broad engineered features, local window rates, and donor-based features, one LightGBM per view.\n\n**Plain models:** a plain LightGBM and a plain XGBoost, trained on a separate 274-feature view.\n\n**Blend:** a fixed 60% three-view ensemble, 20% LightGBM and 20% XGBoost. Across 15 stratified folds this scored 0.946722604 pooled OOF AUC.\n\n**Post-processing:** predictions were adjusted using nearby examples across several existing prediction streams. Four rank rules were applied for strongly separated income and commute groups, and 15% of another LR model's ranks was mixed in. The final local OOF AUC was 0.946836629. The post-processing was selected on the same OOF predictions, so this is not a fresh validation estimate. This submission placed 12th on the private leaderboard.\n\n**What helped:** distinct feature views, income-token features, and the two plain tree models.\n\n**What didn't:** CatBoost, LR-margin XGBoost, larger feature sets, alternative LightGBM structures, conditional blend weights, and more correction streams.\n\n## Training GPUs used\n\nThis was a moderately fast training pipeline, so I resorted to the below GPUs across models \n\n| Model type | GPU |\n| --- | --- |\n| XgBoost | L4 Colab |\n| LightGBM| L4 Colab|\n| CatBoost| A100 Colab  |\n| TABM| A100 (80GB) - runpod |\n| REALMLP| L4 Colab |\n| All other models| L4 Colab |\n\n## Key lessons learnt \n\n- Rely on the CV and don't fall in the blind blending bandwagon\n- Simple, distinct feature views and plain tree models beat complex additions - this held for both our pipelines\n- A good feature store, a functioning GitHub repo and organized folder structure is gold\n- Agents are getting far better than previous month episodes - Opus 5.5, Sonnet 5.5, Sol 6 are exceptional models\n- Reliance on manual coding and human-based feature creation and extraction is reducing by the day - agents are getting better with meaningful feature and model improvements to elicit better signals in the data \n- Do not rely on agents more than necessary and use them judiciously - rely on developing personal skills wherever possible and monitor token costs, using a combination of free LLMS and premium LLMs is a good strategy to manage compute + token costs throughout \n\n## Concluding remarks \n\nHearty congratulations to the winners and best wishes for the subsequent episodes and featured competitions ahead!! <br>\n\nHappy Kaggling and regards! <br>\nTeam Don-Ravi",
+    "content": "<p>Hello all, <br></p>\n<p>I am elated to present my solution writeup for the Playground Season 6 Episode 9 competition. This was a binary classifier to predict the probability of purchasing an electric car given relevant tabular features. This was a fairly large training set with 600k+ rows and a large test set with ~250k rows, eliciting a decent CV-LB relation.</p>\n<p>I wish to extend sincere thanks to Kaggle for this interesting challenge and my fellow participants for their generous sharing through the month. Special thanks to Don Mani for the team-up.</p>\n<p>Our solution is a by-product of a number of public ideas and private inputs as well. Let's delve into the details as below- </p>\n<h2>Assignment details</h2>\n<ul>\n<li>Goal - to predict the probability to purchase an electric car</li>\n<li>Model type -binary-tabular classifier </li>\n<li>Eval-metric - ROC-AUC score</li>\n<li>Competitors = 3576</li>\n<li>Public LB rank = 25</li>\n<li>Private LB rank = 12</li>\n</ul>\n<h2>Overall architecture</h2>\n<p>As illustrated in the figure above, my overall solution architecture relied on 4 major pillars -</p>\n<ul>\n<li>Diverse features from ideas discussed in past playground solutions, my past pipelines and public notebooks, public notebook ideas yielded the best impact</li>\n<li>Models with wide and diverse parameters to elicit variety in the results </li>\n<li>A robust ensemble using CV scores as base, with 2 stage model methods to elicit as much signal boost as feasible post the single model framework</li>\n</ul>\n<h2>Feature Engineering</h2>\n<ul>\n<li>This was the cynosure of the competition pipeline</li>\n<li>Most of the past playground feature ideas, recent winning ideas and public kernel features worked well for us this time </li>\n<li>We built a large feature store comprising of 300+ features using a concoction of several public ideas, past solution and Claude/ Codex suggestions for this assignment </li>\n<li>Large feature sets and complex interactions reduced the CV score and did not work for us at all, simple and small feature sets worked well instead</li>\n<li>Several features were sensitive to model algorithms chosen - certain features performed well with a gbdt, while tanked with a NN model and vice-versa</li>\n</ul>\n<p>My key feature ideas included -</p>\n<ul>\n<li>category twins of numeric columns </li>\n<li>arithmetic operations involving 1-2-3 numeric columns at a time </li>\n<li>n-gram target encoder interactions with category features </li>\n<li>feature encoders - group-by features, with 1 feature as a grouper and another high cardinal feature as an aggregator</li>\n<li>global count encoder across all category columns</li>\n<li>rounded columns as per public ideas and kernels </li>\n<li>binning columns </li>\n<li>secondary models for null values across columns</li>\n<li>direct inclusion of public kernel features across all single models and oof-ensemble kernels shared (ignoring the blind blends)</li>\n</ul>\n<p>My single models often used between 30-250 features this time.  </p>\n<h2>Single models</h2>\n<p>This surprised us a lot - usually we end up training a lot of single models with diverse features, parameters and preprocessing caveats, but this episode was totally different - a large number of single models with complex interactions and features and complex model ideas completely failed, while small and simple models with 30-80 features succeeded with the best in-class CV scores. After a while, gbdt models outperformed Pytabkit models! Also, LightGBM often outscored the rest of the models significantly. <br></p>\n<p>All of these models were trained with the below CV scheme - \n<code>StratifiedKFold(15, random_state = 42, shuffle = True)</code></p>\n<p><br>Our component model stack contained the below- </p>\n<ol>\n<li>LightGBM - best performing single models, public kernel ideas often gleaned the best available features and model parameters. We altered the parameters, a few features and the cv-scheme and produced slight alphas over the shared public work</li>\n<li>XgBoost, Catboost - good single model candidates, for XgBoost, depth = 4-6 worked the best. Catboost performed well, but was inferior in CV scores over XgBoost almost always</li>\n<li>RealMLP, TABM - decent single model candidates, REALMLP training parameters played a significant role in the cv-score. Often, training for lesser epochs (epochs &lt;= 3) worked well. TABM results closely matched the REALMLP ones, with TABM-Normal being the best candidate among the options available. Custom backbones and architecture changes did not help at all.</li>\n<li>Transformer type models - they also performed moderately well on this dataset, inferior to REALMLP/ TABM, but added some diversity to the ensemble </li>\n<li>TAB-RESNET, AUTOINT - they also added a bit of diversity, but failed to provide a standalone result to good effect </li>\n<li>Factorization machines - akin to TAB-RESNET, I added them for ensemble diversity only </li>\n<li>GNN - this was an extremely complex model for this use-case and failed to provide any meaningful and competitive CV-score to include in the ensemble </li>\n</ol>\n<p>Using a slightly higher fold-count helped with the CV-score slightly, adding &gt; 15 folds to the offline model destroyed value. 15-fold scheme was the peak here for our feature sets. </p>\n<h2>Model blending</h2>\n<p>Choosing a robust blend strategy was crucial to maximize my gains here. My model blending strategy was divided into 3 sections - </p>\n<table>\n<thead>\n<tr>\n<th>Model option</th>\n<th>Comments</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Autogluon</td>\n<td>- This was a good option with a great CV score but leaderboard score was low and not chosen for the final submission</td>\n</tr>\n<tr>\n<td>Ridge</td>\n<td>- This was fast to train and provided a good CV-LB correlation</td>\n</tr>\n<tr>\n<td>Logistic Regression</td>\n<td>- This was fast to train and provided CV-LB stability, but CV score was lower than the rest</td>\n</tr>\n</tbody>\n</table>\n<p>We used the public post-processing kernel function in our submissions as below- </p>\n<pre><code>def apply_pp_rules(df, p):\n    \"Defines boundary rules for post-processing\"\n\n    inc, km = df.Annual_Income_USD.to_numpy(), df.Daily_Commute_km.to_numpy()\n    nosub   = (df.Subsidy_Available == \"No\").to_numpy()\n    env1    = (df.Environmental_Concern_Level == 1).to_numpy()\n    anx     = df.Range_Anxiety_Level.isin([\"Medium\", \"High\"]).to_numpy()\n    r       = rk(p)\n\n    r[inc &gt;= 170537] += 2                                    # always buys in training (393/393)\n    r[(inc &gt;= 31004) &amp; (inc &lt;= 41970)] -= 2                  # never buys (0/1257)\n    r[km &gt;= 83] -= 2                                         # never buys (0/186)\n    r[(inc == 30000) &amp; nosub &amp; (env1 | anx)] -= 2            # never buys (0/7157)\n\n    return rankdata(r, method=\"ordinal\") / len(r)\n\ndef rk(v):\n    return rankdata(v) / len(v)\n</code></pre>\n<p><br>After a lot of deliberation, we decided to choose- </p>\n<ol>\n<li>Ridge ensemble with post-processing for 1 candidate (Ravi)</li>\n<li>LR-margin anchored LightGBM views with prediction adjustment using ancillary models (Don) - detailed in the next section</li>\n</ol>\n<p>A lot of large ensembles with 150-200+ single models tanked on the CV score, using a set of 100-120 diverse models here was good enough.</p>\n<p>We ended up selecting the better result from either approach to diversify our result and reduce the shakeup risk. Both candidates used the public post-processing rank rules; Don's LR-margin initialization was what separated his pipeline from the Ridge stack.</p>\n<h2>Don Mani's pipeline (Candidate 2)</h2>\n<p><strong>Base model:</strong> A generator-aware logistic regression with engineered category and rate features, including features from how income values split into GPT-2 tokens. Its logits served as the starting point (init margin) for three LightGBM models.</p>\n<p><strong>Three feature views:</strong> broad engineered features, local window rates, and donor-based features, one LightGBM per view.</p>\n<p><strong>Plain models:</strong> a plain LightGBM and a plain XGBoost, trained on a separate 274-feature view.</p>\n<p><strong>Blend:</strong> a fixed 60% three-view ensemble, 20% LightGBM and 20% XGBoost. Across 15 stratified folds this scored 0.946722604 pooled OOF AUC.</p>\n<p><strong>Post-processing:</strong> predictions were adjusted using nearby examples across several existing prediction streams. Four rank rules were applied for strongly separated income and commute groups, and 15% of another LR model's ranks was mixed in. The final local OOF AUC was 0.946836629. The post-processing was selected on the same OOF predictions, so this is not a fresh validation estimate. This submission placed 12th on the private leaderboard.</p>\n<p><strong>What helped:</strong> distinct feature views, income-token features, and the two plain tree models.</p>\n<p><strong>What didn't:</strong> CatBoost, LR-margin XGBoost, larger feature sets, alternative LightGBM structures, conditional blend weights, and more correction streams.</p>\n<h2>Training GPUs used</h2>\n<p>This was a moderately fast training pipeline, so I resorted to the below GPUs across models </p>\n<table>\n<thead>\n<tr>\n<th>Model type</th>\n<th>GPU</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>XgBoost</td>\n<td>L4 Colab</td>\n</tr>\n<tr>\n<td>LightGBM</td>\n<td>L4 Colab</td>\n</tr>\n<tr>\n<td>CatBoost</td>\n<td>A100 Colab</td>\n</tr>\n<tr>\n<td>TABM</td>\n<td>A100 (80GB) - runpod</td>\n</tr>\n<tr>\n<td>REALMLP</td>\n<td>L4 Colab</td>\n</tr>\n<tr>\n<td>All other models</td>\n<td>L4 Colab</td>\n</tr>\n</tbody>\n</table>\n<h2>Key lessons learnt</h2>\n<ul>\n<li>Rely on the CV and don't fall in the blind blending bandwagon</li>\n<li>Simple, distinct feature views and plain tree models beat complex additions - this held for both our pipelines</li>\n<li>A good feature store, a functioning GitHub repo and organized folder structure is gold</li>\n<li>Agents are getting far better than previous month episodes - Opus 5.5, Sonnet 5.5, Sol 6 are exceptional models</li>\n<li>Reliance on manual coding and human-based feature creation and extraction is reducing by the day - agents are getting better with meaningful feature and model improvements to elicit better signals in the data </li>\n<li>Do not rely on agents more than necessary and use them judiciously - rely on developing personal skills wherever possible and monitor token costs, using a combination of free LLMS and premium LLMs is a good strategy to manage compute + token costs throughout </li>\n</ul>\n<h2>Concluding remarks</h2>\n<p>Hearty congratulations to the winners and best wishes for the subsequent episodes and featured competitions ahead!! <br></p>\n<p>Happy Kaggling and regards! <br>\nTeam Don-Ravi</p>",
+    "parent": {},
+    "author": {
+      "displayName": "Ravi Ramakrishnan",
+      "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/8273630-kg.JPG?t=2024-03-26-14-51-52",
+      "url": "/ravi20076",
+      "tier": "GRANDMASTER",
+      "id": 8273630,
+      "progressionOptOut": false
+    },
+    "authorType": "TOPIC",
+    "votes": {
+      "totalVotes": 16,
+      "canUpvote": true,
+      "totalUpvotes": 16
+    },
+    "kernelVersion": 0,
+    "competitionRanking": 12,
+    "feedbackTrackingData": {},
+    "reactions": [
+      {
+        "emoji": "LOVE",
+        "featuredUserNames": [
+          "adaubas",
+          "herens"
+        ],
+        "userCount": 2
+      },
+      {
+        "emoji": "YAY",
+        "featuredUserNames": [
+          "zhukovoleksiy"
+        ],
+        "userCount": 1
+      }
+    ],
+    "teamUpInfo": {
+      "teamLeader": {
+        "displayName": "Ravi Ramakrishnan",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/8273630-kg.JPG?t=2024-03-26-14-51-52",
+        "url": "/ravi20076",
+        "userName": "ravi20076",
+        "tier": "GRANDMASTER",
+        "id": 8273630,
+        "profileUrl": "/ravi20076",
+        "performanceTier": "GRANDMASTER",
+        "userId": 8273630,
+        "progressionOptOut": false
+      },
+      "intro": ""
+    }
+  },
+  "type": "COMPETITION_SOLUTION",
+  "coverImageUrl": "/writeup-links/197707/images/cropped",
+  "writeUpLinks": [
+    {
+      "id": 197703,
+      "title": "PlaygroundS6E9|Public|SingleModels|V1",
+      "location": "ADDITIONAL_LINKS",
+      "url": "https://www.kaggle.com/code/ravi20076/playgrounds6e9-public-singlemodels-v1",
+      "kernelId": 136571240,
+      "description": "Select single models used in the ensemble",
+      "resource": {
+        "date": "2026-09-30T20:41:22.523966700Z",
+        "upvoteCount": 2,
+        "ownerUser": {
+          "displayName": "Ravi Ramakrishnan",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/8273630-kg.JPG?t=2024-03-26-14-51-52",
+          "url": "/ravi20076",
+          "userName": "ravi20076",
+          "tier": "GRANDMASTER",
+          "id": 8273630,
+          "profileUrl": "/ravi20076",
+          "performanceTier": "GRANDMASTER",
+          "userId": 8273630,
+          "progressionOptOut": false
+        },
+        "usabilityRating": 0,
+        "isPrivate": false,
+        "isPhoneVerified": true
+      },
+      "entityType": "KAGGLE_RESOURCE_TYPE_KERNELS"
+    },
+    {
+      "id": 197704,
+      "title": "PlaygroundS6E9|Public|Ensemble|V1",
+      "sortKey": 1,
+      "location": "ADDITIONAL_LINKS",
+      "url": "https://www.kaggle.com/code/ravi20076/playgrounds6e9-public-ensemble-v1",
+      "kernelId": 132942781,
+      "description": "Early ensemble baseline",
+      "resource": {
+        "date": "2026-09-02T21:53:56.871337500Z",
+        "upvoteCount": 13,
+        "medal": "BRONZE",
+        "ownerUser": {
+          "displayName": "Ravi Ramakrishnan",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/8273630-kg.JPG?t=2024-03-26-14-51-52",
+          "url": "/ravi20076",
+          "userName": "ravi20076",
+          "tier": "GRANDMASTER",
+          "id": 8273630,
+          "profileUrl": "/ravi20076",
+          "performanceTier": "GRANDMASTER",
+          "userId": 8273630,
+          "progressionOptOut": false
+        },
+        "usabilityRating": 0,
+        "isPrivate": false,
+        "isPhoneVerified": true
+      },
+      "entityType": "KAGGLE_RESOURCE_TYPE_KERNELS"
+    },
+    {
+      "id": 197705,
+      "title": "PlaygroundS6E9|Public|DataCollation|V1",
+      "sortKey": 2,
+      "location": "ADDITIONAL_LINKS",
+      "url": "https://www.kaggle.com/code/ravi20076/playgrounds6e9-public-datacollation-v1",
+      "kernelId": 132938556,
+      "description": "Illustrative kernel for out-of-fold collation",
+      "resource": {
+        "date": "2026-09-02T20:38:57.597053200Z",
+        "upvoteCount": 6,
+        "ownerUser": {
+          "displayName": "Ravi Ramakrishnan",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/8273630-kg.JPG?t=2024-03-26-14-51-52",
+          "url": "/ravi20076",
+          "userName": "ravi20076",
+          "tier": "GRANDMASTER",
+          "id": 8273630,
+          "profileUrl": "/ravi20076",
+          "performanceTier": "GRANDMASTER",
+          "userId": 8273630,
+          "progressionOptOut": false
+        },
+        "usabilityRating": 0,
+        "isPrivate": false,
+        "isPhoneVerified": true
+      },
+      "entityType": "KAGGLE_RESOURCE_TYPE_KERNELS"
+    },
+    {
+      "id": 197706,
+      "title": "PlaygroundS6E9|SingleModels|V1",
+      "sortKey": 3,
+      "location": "ADDITIONAL_LINKS",
+      "url": "https://www.kaggle.com/datasets/ravi20076/playgrounds6e9singlemodelsv1",
+      "datasetId": 12025477,
+      "description": "Select single models for the final ensemble",
+      "resource": {
+        "date": "2026-09-14T20:08:34.120Z",
+        "upvoteCount": 1,
+        "ownerUser": {
+          "displayName": "Ravi Ramakrishnan",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/8273630-kg.JPG?t=2024-03-26-14-51-52",
+          "url": "/ravi20076",
+          "userName": "ravi20076",
+          "tier": "GRANDMASTER",
+          "id": 8273630
+        },
+        "usabilityRating": 0.7058823529411765,
+        "thumbnailImageUrl": "https://storage.googleapis.com/kaggle-datasets-images/new-version-temp-images/default-backgrounds-66.png-8273630/dataset-thumbnail.png",
+        "isPrivate": false,
+        "isPhoneVerified": true
+      },
+      "entityType": "KAGGLE_RESOURCE_TYPE_DATASETS"
+    },
+    {
+      "id": 197707,
+      "title": "Training process flow",
+      "location": "CAROUSEL",
+      "url": "/writeup-links/197707/images/cropped",
+      "description": "",
+      "mediaType": "IMAGE",
+      "resource": {
+        "upvoteCount": 0,
+        "usabilityRating": 0
+      },
+      "originalImageUrl": "/writeup-links/197707/images/original"
+    }
+  ],
+  "tags": [
+    {
+      "id": 16690,
+      "name": "tabular classification",
+      "fullPath": "task > tabular-classification",
+      "listingUrl": "/datasets?group=public&tagids=16690",
+      "description": "",
+      "datasetCount": 206,
+      "competitionCount": 24,
+      "notebookCount": 311,
+      "tagUrl": "/tags/tabular-classification",
+      "displayName": "Tabular Classification",
+      "googleMaterialIcon": "grid_on",
+      "modelCount": 25
+    },
+    {
+      "id": 12402,
+      "name": "automobiles and vehicles",
+      "fullPath": "subject > science and technology > transportation > automobiles and vehicles",
+      "listingUrl": "/datasets?group=public&tagids=12402",
+      "description": "The automobile tag is everything about cars. Analyze insurance rates or how far you can go on one gallon of petrol.",
+      "datasetCount": 14939,
+      "competitionCount": 16,
+      "notebookCount": 1986,
+      "tagUrl": "/tags/automobiles",
+      "displayName": "Automobiles and Vehicles",
+      "modelCount": 24
+    }
+  ],
+  "slug": "rank12-approach",
+  "url": "/competitions/playground-series-s6e9/writeups/rank12-approach",
+  "createTime": "2026-10-01T01:03:32.094083Z",
+  "updateTime": "2026-10-01T04:06:53.411421200Z",
+  "contentState": "PUBLISHED",
+  "authors": "Ravi Ramakrishnan, Don Mani",
+  "imageInfo": {},
+  "collaborators": [
+    {
+      "displayName": "Ravi Ramakrishnan",
+      "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/8273630-kg.JPG?t=2024-03-26-14-51-52",
+      "url": "/ravi20076",
+      "userName": "ravi20076",
+      "tier": "GRANDMASTER",
+      "id": 8273630,
+      "profileUrl": "/ravi20076",
+      "performanceTier": "GRANDMASTER",
+      "userId": 8273630,
+      "progressionOptOut": false
+    },
+    {
+      "displayName": "Don Mani",
+      "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/3160429-kg.png?t=2025-12-31-19-10-28",
+      "url": "/donmarch14",
+      "userName": "donmarch14",
+      "tier": "EXPERT",
+      "id": 3160429,
+      "profileUrl": "/donmarch14",
+      "performanceTier": "EXPERT",
+      "userId": 3160429,
+      "progressionOptOut": false
+    }
+  ],
+  "publishTime": "2026-10-01T01:03:56.640Z"
+}

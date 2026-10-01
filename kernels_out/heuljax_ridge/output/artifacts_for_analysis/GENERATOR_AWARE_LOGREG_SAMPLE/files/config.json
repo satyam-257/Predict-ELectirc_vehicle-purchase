@@ -1,0 +1,25 @@
+{
+  "model": "L2-regularized logistic regression / binomial GLM",
+  "optimizer": "torch.optim.LBFGS",
+  "l2": 10.0,
+  "lbfgs_iters": 200,
+  "output_transform": {
+    "temperature": 1.25,
+    "offset": -1.0
+  },
+  "cv": {
+    "outer_folds": 10,
+    "inner_folds": 5,
+    "shuffle": true,
+    "random_state": 42
+  },
+  "n_features": 316,
+  "device": "cuda",
+  "versions": {
+    "python": "3.12.13",
+    "numpy": "2.0.2",
+    "pandas": "2.3.3",
+    "torch": "2.10.0+cu128",
+    "sklearn": "1.6.1"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "source_exact_predictor_overlap": false,
+  "prefix_window_equivalence": true,
+  "explicit_array_boundary": true,
+  "additive_kernel_equivalence": true,
+  "additive_logistic_objective_decreased": true,
+  "donor_count_subtraction_exact": true,
+  "overlapping_query_rejected": true,
+  "outside_donor_label_canary": true,
+  "donor_labels_affect_features": true,
+  "linear_attribution_reconstruction": true,
+  "outer_oof_coverage_exactly_one": true,
+  "prediction_probabilities_valid": true,
+  "inner_target_features_cross_fitted": true,
+  "donor_states_per_outer_fold": 6,
+  "prediction_roundtrip_and_row_alignment": true
+}

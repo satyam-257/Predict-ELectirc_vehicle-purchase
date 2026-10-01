@@ -1,0 +1,8 @@
+{
+  "complete_oof": true,
+  "outer_validation_labels_used_in_features": false,
+  "inner_target_features_cross_fitted": true,
+  "test_probabilities_finite_in_01": true,
+  "oof_id_order_equals_train": true,
+  "test_id_order_equals_test": true
+}

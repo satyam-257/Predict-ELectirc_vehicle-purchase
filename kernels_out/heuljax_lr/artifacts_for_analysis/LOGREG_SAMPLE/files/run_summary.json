@@ -1,0 +1,31 @@
+{
+  "experiment": "LOGREG_SAMPLE",
+  "smoke_test": false,
+  "status": "complete",
+  "completed_folds": 10,
+  "fold_auc": [
+    0.9453596909821518,
+    0.9454151667906077,
+    0.9455924538452026,
+    0.9462668292173746,
+    0.9470392034725268,
+    0.9471776242351496,
+    0.9461930983132305,
+    0.9470940123484306,
+    0.9472845829770334,
+    0.9453153252188787
+  ],
+  "feature_recipe": "fast approximations",
+  "validation_scope": "10-fold CV on all input train.csv rows",
+  "prediction_files": {
+    "oof": "oof/LOGREG_SAMPLE_OOF.parquet",
+    "test": "test_preds/LOGREG_SAMPLE_TEST.parquet",
+    "submission": "submission.csv"
+  },
+  "semantic_features": 229,
+  "last_model_features": 300,
+  "last_fit_hit_iteration_limit": true,
+  "pooled_auc": 0.9462635574921241,
+  "mean_fold_auc": 0.9462737987400585,
+  "seconds": 292.0276658629999
+}

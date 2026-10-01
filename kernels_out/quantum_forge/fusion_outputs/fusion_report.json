@@ -1,0 +1,152 @@
+{
+  "components": [
+    {
+      "component": "C1_chinzo_lgbm",
+      "oof_auc": 0.9463421220151879,
+      "fold_min": 0.9451397527049173,
+      "fold_max": 0.9470193669161118,
+      "partitions": 4,
+      "single_partition_mean": 0.9461293567825679,
+      "minutes": 52.7022442817688
+    },
+    {
+      "component": "A1_najiama_xgb",
+      "oof_auc": 0.946321316737502,
+      "fold_min": 0.9451843098916942,
+      "fold_max": 0.94701084216958,
+      "partitions": 4,
+      "single_partition_mean": 0.946133443360647,
+      "minutes": 72.31550162235895
+    },
+    {
+      "component": "D_megayak_liftwin",
+      "oof_auc": 0.9463091526122605,
+      "fold_min": 0.9452475269981628,
+      "fold_max": 0.9469106753795868,
+      "partitions": 4,
+      "single_partition_mean": 0.9461102580541717,
+      "minutes": 37.832159181435905
+    },
+    {
+      "component": "E_bulsah_mrte",
+      "oof_auc": 0.9462908571293736,
+      "fold_min": 0.945109613965119,
+      "fold_max": 0.9469635767916639,
+      "partitions": 4,
+      "single_partition_mean": 0.9460788460217961,
+      "minutes": 32.68938897848129
+    },
+    {
+      "component": "A2_najiama_lgbm",
+      "oof_auc": 0.946290832318941,
+      "fold_min": 0.9451282994872616,
+      "fold_max": 0.9469418144731736,
+      "partitions": 4,
+      "single_partition_mean": 0.9460636071814745,
+      "minutes": 72.31550162235895
+    },
+    {
+      "component": "C2_chinzo_catboost",
+      "oof_auc": 0.9462764234624514,
+      "fold_min": 0.9451990918158938,
+      "fold_max": 0.9469326795554912,
+      "partitions": 4,
+      "single_partition_mean": 0.9461023388441945,
+      "minutes": 60.89617207447688
+    },
+    {
+      "component": "C3_chinzo_linear",
+      "oof_auc": 0.9456777079433265,
+      "fold_min": 0.9446186508913362,
+      "fold_max": 0.9462859489509667,
+      "partitions": 4,
+      "single_partition_mean": 0.9455154466986493,
+      "minutes": 18.1682040254275
+    }
+  ],
+  "gate": [
+    {
+      "fold": 0,
+      "blend_auc": 0.9454516619344221,
+      "best_single": "C1_chinzo_lgbm",
+      "single_auc": 0.945368678184131,
+      "gain": 8.298375029114347e-05,
+      "weights": {
+        "C1_chinzo_lgbm": 0.333,
+        "A1_najiama_xgb": 0.333,
+        "D_megayak_liftwin": 0.167,
+        "C2_chinzo_catboost": 0.167
+      }
+    },
+    {
+      "fold": 1,
+      "blend_auc": 0.9460929859126431,
+      "best_single": "C1_chinzo_lgbm",
+      "single_auc": 0.9460446745547473,
+      "gain": 4.8311357895847173e-05,
+      "weights": {
+        "C1_chinzo_lgbm": 0.25,
+        "A1_najiama_xgb": 0.25,
+        "D_megayak_liftwin": 0.25,
+        "C2_chinzo_catboost": 0.25
+      }
+    },
+    {
+      "fold": 2,
+      "blend_auc": 0.9472540993311123,
+      "best_single": "C1_chinzo_lgbm",
+      "single_auc": 0.9472147574503422,
+      "gain": 3.934188077003853e-05,
+      "weights": {
+        "C1_chinzo_lgbm": 0.25,
+        "A1_najiama_xgb": 0.25,
+        "D_megayak_liftwin": 0.25,
+        "C2_chinzo_catboost": 0.25
+      }
+    },
+    {
+      "fold": 3,
+      "blend_auc": 0.9467483074011318,
+      "best_single": "C1_chinzo_lgbm",
+      "single_auc": 0.9467034177340947,
+      "gain": 4.4889667037084635e-05,
+      "weights": {
+        "C1_chinzo_lgbm": 0.25,
+        "A1_najiama_xgb": 0.25,
+        "D_megayak_liftwin": 0.25,
+        "C2_chinzo_catboost": 0.25
+      }
+    },
+    {
+      "fold": 4,
+      "blend_auc": 0.946436185656333,
+      "best_single": "C1_chinzo_lgbm",
+      "single_auc": 0.9463877230163337,
+      "gain": 4.846263999935818e-05,
+      "weights": {
+        "C1_chinzo_lgbm": 0.25,
+        "A1_najiama_xgb": 0.25,
+        "D_megayak_liftwin": 0.25,
+        "C2_chinzo_catboost": 0.25
+      }
+    }
+  ],
+  "blend_used": true,
+  "weights": {
+    "C1_chinzo_lgbm": 0.25,
+    "A1_najiama_xgb": 0.25,
+    "D_megayak_liftwin": 0.25,
+    "C2_chinzo_catboost": 0.25
+  },
+  "final_oof_auc": 0.9463975985145838,
+  "minutes": 276.13583795229596,
+  "gpu": true,
+  "smoke": false,
+  "folds": 5,
+  "partition_seeds": [
+    42,
+    45,
+    48,
+    51
+  ]
+}

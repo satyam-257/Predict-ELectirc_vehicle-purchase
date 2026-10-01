@@ -1,0 +1,40 @@
+# Python & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+catboost_info/
+
+# Environment Variables & Secrets
+.env
+.env.*
+
+# Logs
+*.log
+
+# Competition Data & Raw Files
+data/
+*.zip
+EV_Adoption_and_Range_Anxiety_Dataset.csv
+
+# Heavy Predictions, Submissions & OOFs
+preds/
+test_preds/
+oof/
+submission*.csv
+submission*.zip
+*.parquet
+*.npy
+
+# Ignore large data dumps inside kernels_out but keep notebooks/code
+kernels_out/**/*.csv
+kernels_out/**/*.parquet
+kernels_out/**/*.npy
+kernels_out/**/*.zip
+kernels_out/**/*.pth
+kernels_out/**/*.pt
+kernels_out/**/*.bin

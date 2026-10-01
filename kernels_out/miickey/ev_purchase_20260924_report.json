@@ -1,0 +1,19 @@
+{
+  "as_of": "2026-09-24",
+  "target_public_auc": 0.94644,
+  "source_reported_public_auc": 0.94657,
+  "source_notebook": "https://www.kaggle.com/code/chinzorigtganbat/s6e9-does-breaking-ties-help",
+  "original_blend_notebook": "https://www.kaggle.com/code/nina2025/ps-s6e9-a-simple-50-50-two-level-straight-blend?scriptVersionId=351902031",
+  "input_hashes": {
+    "chinzo_v8": "b625edbaa8a715b3fd69d90fe1f23c9260bdd9cf95b975e04448449b09ab928e"
+  },
+  "outputs": [
+    {
+      "file": "submission_exact_public_94657.csv",
+      "rows": 286571,
+      "unique_scores": 286571,
+      "sha256": "b625edbaa8a715b3fd69d90fe1f23c9260bdd9cf95b975e04448449b09ab928e"
+    }
+  ],
+  "measured_new_blend_scores": null
+}

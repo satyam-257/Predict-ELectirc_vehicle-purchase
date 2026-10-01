@@ -1,0 +1,25 @@
+{
+  "experiment": "GENERATOR_AWARE_LOGREG_SAMPLE",
+  "status": "complete",
+  "smoke_test": false,
+  "completed_folds": 10,
+  "fold_auc": [
+    0.945463809364728,
+    0.9456040147963914,
+    0.9457853406586557,
+    0.9464172922585279,
+    0.9472080839731637,
+    0.9473435910836797,
+    0.9462344879201185,
+    0.9472314398079271,
+    0.9473518164561737,
+    0.94535515699389
+  ],
+  "pooled_oof_auc": 0.9464000111933748,
+  "runtime_seconds": 205.25,
+  "prediction_files": {
+    "oof": "oof/GENERATOR_AWARE_LOGREG_SAMPLE_OOF.parquet",
+    "test": "test_preds/GENERATOR_AWARE_LOGREG_SAMPLE_TEST.parquet",
+    "submission": "submission.csv"
+  }
+}

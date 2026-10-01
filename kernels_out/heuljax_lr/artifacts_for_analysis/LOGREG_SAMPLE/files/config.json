@@ -1,0 +1,30 @@
+{
+  "n_folds": 10,
+  "inner_folds": 5,
+  "random_state": 42,
+  "model": {
+    "C": 0.1,
+    "solver": "lbfgs",
+    "max_iter": 250,
+    "tol": 0.0002,
+    "random_state": 42
+  },
+  "additive_sweeps": 10,
+  "mixture_steps": 8,
+  "batch_rows": 32768,
+  "matrix_ram_mb": 1536,
+  "threads": 4,
+  "data_dir": "/kaggle/input/competitions/playground-series-s6e9",
+  "original_path": "/kaggle/input/datasets/itzzomkar/ev-adoption-behavior-and-range-anxiety/EV_Adoption_and_Range_Anxiety_Dataset.csv",
+  "dependencies": {
+    "numpy": "2.0.2",
+    "pandas": "2.3.3",
+    "scipy": "1.16.3",
+    "scikit-learn": "1.6.1",
+    "numba": "0.60.0",
+    "threadpoolctl": "3.6.0"
+  },
+  "source_label_use": true,
+  "transductive_covariates": true,
+  "native_parquet_engine": "pyarrow"
+}

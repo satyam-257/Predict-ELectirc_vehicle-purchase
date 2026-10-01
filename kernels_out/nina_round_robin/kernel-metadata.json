@@ -1,0 +1,23 @@
+{
+  "id": "nina2025/fork-of-ps-s6e9-round-robin",
+  "id_no": 135452252,
+  "title": "Fork of PS-s6e9 | \ud83e\ude9d\ud83d\udc20 Round+Robin",
+  "code_file": "fork-of-ps-s6e9-round-robin.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": false,
+  "enable_gpu": false,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "keywords": [],
+  "dataset_sources": [
+    "nina2025/ps-s6e9-30"
+  ],
+  "kernel_sources": [],
+  "competition_sources": [
+    "playground-series-s6e9"
+  ],
+  "model_sources": [],
+  "docker_image": "gcr.io/kaggle-images/python@sha256:dafd4ce5668bbf1ad422e4c109e0f18c9623c3a7c7f48b0235f13142755c40b9",
+  "machine_shape": "None"
+}
